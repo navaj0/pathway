@@ -1,4 +1,6 @@
 import contextlib
+import os.path
+
 import cloudpickle
 import shutil
 import subprocess
@@ -62,6 +64,17 @@ def unpickle_object(func: Callable, session, bucket: str, s3_key_prefix: str):
     s3_resource.Object(bucket, f'{s3_key_prefix}/func.pkl').put(Body=pickled)
 
     return f's3://{bucket}/{s3_key_prefix}/func.pkl'
+
+
+def upload_code_package(source: str, session, bucket: str, s3_key_prefix: str):
+    """
+    Package source files and upload a compress tar file to S3.
+    """
+    base_name = os.path.basename(source)
+    s3_resource = session.resource("s3", region_name=session.region_name)
+    s3_resource.Bucket(bucket).upload_file(Key=f'{s3_key_prefix}/{base_name}', Filename=source)
+
+    return f's3://{bucket}/{s3_key_prefix}/{base_name}'
 
 
 def sagemaker_timestamp():

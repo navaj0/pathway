@@ -14,11 +14,16 @@ class ProcessingJobTestCase(unittest.TestCase):
             pass
 
         base_image = 'base_image'
-        run_processing_job(base_image, func, arguments_dict={
-            'data': Input('s3://input.csv'),
-            'output': Output('s3://output.csv'),
-            'split_ratio': 0.7
-        })
+        run_processing_job(
+            image_uri=base_image,
+            instance_type='ml.m5.large',
+            environment_definition=None,
+            func=func,
+            arguments_dict={
+                'data': Input('s3://input.csv'),
+                'output': Output('s3://output.csv'),
+                'split_ratio': 0.7
+            })
 
         processor_mock.assert_called_once_with(
             image_uri=base_image,
@@ -50,9 +55,14 @@ class ProcessingJobTestCase(unittest.TestCase):
         input_data = DataObject.set(0.3)
 
         with patch('pathway.runtime.dataset._PickleDataLoader.save_to_s3') as mock_save_to_s3:
-            job = run_processing_job(base_image, func, arguments_dict={
-                'input_data': input_data,
-            })
+            job = run_processing_job(
+                image_uri=base_image,
+                instance_type='ml.m5.large',
+                environment_definition=None,
+                func=func,
+                arguments_dict={
+                    'input_data': input_data,
+                })
 
             self.assertTrue(isinstance(job.results, _AsyncDataObject))
 
@@ -88,9 +98,14 @@ class ProcessingJobTestCase(unittest.TestCase):
         input_data = _AsyncDataObject(job=Mock(), path="s3://first-job/input.pkl")
 
         with patch('pathway.runtime.dataset._PickleDataLoader.save_to_s3') as mock_save_to_s3:
-            job = run_processing_job(base_image, func, arguments_dict={
-                'input_data': input_data,
-            })
+            job = run_processing_job(
+                image_uri=base_image,
+                instance_type='ml.m5.large',
+                func=func,
+                environment_definition=None,
+                arguments_dict={
+                    'input_data': input_data,
+                })
 
             self.assertTrue(isinstance(job.results, _AsyncDataObject))
 

@@ -18,6 +18,19 @@ class ProcessingEntryPointTestCase(unittest.TestCase):
             processing_script(script_arguments)
             func_mock.assert_called_once_with(x=0.0)
 
+    def test_bootstrap(self):
+        func_mock = Mock()
+
+        def func(x: float):
+            func_mock(x=x)
+
+        with patch('pathway.runtime.process_entry_point.bootstrap') as mock_bootstrap:
+            with patch('pathway.runtime.process_entry_point._get_function', return_value=func):
+                script_arguments = ['--func-code', 's3://func', '--env-def', 's3://env-def', '--x', '0.0']
+                processing_script(script_arguments)
+                func_mock.assert_called_once_with(x=0.0)
+                mock_bootstrap.assert_called_once_with('s3://env-def')
+
     def test_func_data_object(self):
         returned_object = DataObject.set(4)
         func_mock = Mock()

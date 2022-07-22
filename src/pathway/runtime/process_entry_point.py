@@ -3,7 +3,9 @@ import boto3
 import pickle
 import inspect
 
-from .dataset import Input, Output, _PickleDataLoader, is_primitive, Timer
+from pathway.runtime.bootstrap import bootstrap
+
+from .dataset import Input, Output, _PickleDataLoader, is_primitive, Timer, parse_s3_url
 
 from typing import Callable
 from urllib.parse import urlparse
@@ -15,8 +17,14 @@ def processing_script(input_args):
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--func-code', type=str)
+    parser.add_argument('--env-def', type=str)
     args, _ = parser.parse_known_args(input_args)
 
+    # bootstrap
+    if args.env_def:
+        bootstrap(args.env_def)
+
+    # deserialize the code
     func = _get_function(args.func_code)
 
     # rebuild the arguments
@@ -60,12 +68,11 @@ def processing_script(input_args):
 
 def _get_function(code_location: str) -> Callable:
     with Timer(name=f"loading code from {code_location}"):
-        parsed = urlparse(code_location)
-        bucket = parsed.netloc
-        object_key = parsed.path[1:]  # remove the leading '/'
+        bucket, object_key = parse_s3_url(code_location)
 
         session = boto3.session.Session()
         s3_resource = session.resource('s3')
 
         code = s3_resource.Object(bucket, object_key).get()['Body'].read()
         return pickle.loads(code)
+

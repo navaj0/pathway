@@ -4,8 +4,8 @@ from sagemaker.processing import Processor, ProcessingInput, ProcessingOutput
 from sagemaker.session import Session
 from sagemaker.workflow.pipeline_context import PipelineSession
 from sagemaker.workflow.steps import ProcessingStep
-from typing import Callable, Dict, List, get_type_hints
-from .util import pickle_func, sagemaker_timestamp
+from typing import Callable, Dict, List, get_type_hints, Optional
+from .util import pickle_func, sagemaker_timestamp, upload_code_package
 from .pipeline import PipelineContext
 
 import os
@@ -47,6 +47,7 @@ class ProcessingJob(Job):
 
 def run_processing_job(image_uri: str,
                        instance_type: str,
+                       environment_definition: Optional[str],
                        func: Callable,
                        arguments_dict: Dict):
 
@@ -59,11 +60,20 @@ def run_processing_job(image_uri: str,
 
     base_job_name = func.__name__.replace('_', '-')
     job_name = f"{base_job_name}-{sagemaker_timestamp()}"
+
+
     code_location = pickle_func(func, boto3_session, sagemaker_session.default_bucket(), job_name)
+    command = ['--func-code', code_location]
+
+    if environment_definition:
+        location = upload_code_package(environment_definition, boto3_session,
+                                       bucket=sagemaker_session.default_bucket(),
+                                       s3_key_prefix=job_name)
+        command.append('--env-def')
+        command.append(location)
 
     entry_point = ['pathway-runtime']
 
-    command = ['--func-code', code_location]
     processor_inputs = []
     processor_outputs = []
 
@@ -104,7 +114,7 @@ def run_processing_job(image_uri: str,
         instance_type=instance_type,
         instance_count=1,
         role="arn:aws:iam::789267064511:role/service-role/AmazonSageMaker-ExecutionRole-20200403T112353",
-        entrypoint=entry_point,
+        # entrypoint=entry_point,
         sagemaker_session=sagemaker_session
     )
 

@@ -4,7 +4,7 @@ from functools import wraps
 
 def processing_job(image_uri: str,
                    instance_type: str,
-                   packages_to_install: List[str] = None):
+                   environment_definition: str = None):
 
     def inner(func: Callable):
         @wraps(func)
@@ -18,7 +18,11 @@ def processing_job(image_uri: str,
             argument_binding = func_signature.bind(*args, **kwargs)
             arguments_dict = argument_binding.arguments
 
-            return run_processing_job(image_uri, instance_type=instance_type, func=func, arguments_dict=arguments_dict)
+            return run_processing_job(image_uri,
+                                      instance_type=instance_type,
+                                      environment_definition=environment_definition,
+                                      func=func,
+                                      arguments_dict=arguments_dict)
         return wrapper
 
     return inner
