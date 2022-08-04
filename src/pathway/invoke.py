@@ -47,6 +47,7 @@ class ProcessingJob(Job):
 
 def run_processing_job(image_uri: str,
                        instance_type: str,
+                       instance_count: int,
                        environment_definition: Optional[str],
                        func: Callable,
                        arguments_dict: Dict):
@@ -60,7 +61,6 @@ def run_processing_job(image_uri: str,
 
     base_job_name = func.__name__.replace('_', '-')
     job_name = f"{base_job_name}-{sagemaker_timestamp()}"
-
 
     code_location = pickle_func(func, boto3_session, sagemaker_session.default_bucket(), job_name)
     command = ['--func-code', code_location]
@@ -112,7 +112,7 @@ def run_processing_job(image_uri: str,
     _processor = Processor(
         image_uri=image_uri,
         instance_type=instance_type,
-        instance_count=1,
+        instance_count=instance_count,
         role="arn:aws:iam::789267064511:role/service-role/AmazonSageMaker-ExecutionRole-20200403T112353",
         # entrypoint=entry_point,
         sagemaker_session=sagemaker_session

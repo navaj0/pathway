@@ -35,7 +35,8 @@ setuptools.setup(
     install_requires=[
         'typing_extensions',
         'cloudpickle',
-        'boto3'
+        'boto3',
+        'retrying'
     ],
     extra_requires={
         'client': [

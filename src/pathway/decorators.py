@@ -4,6 +4,7 @@ from functools import wraps
 
 def processing_job(image_uri: str,
                    instance_type: str,
+                   instance_count: int = 1,
                    environment_definition: str = None):
 
     def inner(func: Callable):
@@ -20,6 +21,7 @@ def processing_job(image_uri: str,
 
             return run_processing_job(image_uri,
                                       instance_type=instance_type,
+                                      instance_count=instance_count,
                                       environment_definition=environment_definition,
                                       func=func,
                                       arguments_dict=arguments_dict)
